@@ -14,8 +14,9 @@ const debug = async (page, logName, saveScreenShot) => {
 const delay = timeout => new Promise(resolve => setTimeout(resolve, timeout));
 
 const sendEmail = async (params) => {
+  const from = config.sendGrid.SENDER;
   const data = {
-    from: 'manavjaiswal21@gmail.com',
+    from,
     to: config.NOTIFY_EMAILS,
     subject: 'Hello US VISA schedules',
     ...params
@@ -23,7 +24,7 @@ const sendEmail = async (params) => {
   try {
     await sgMail.send(data);
   } catch(error) {
-    console.log(error);
+    console.log(error.response.body);
   }
 };
 

@@ -44,7 +44,7 @@ const getDatesForFacility = async (page, url) => {
     const bodyText = await page.evaluate(() => {
       return document.querySelector('body').innerText
     });
-    console.log(bodyText);
+    // console.log(bodyText);
     const parsedBody =  JSON.parse(bodyText);
 
     if(!Array.isArray(parsedBody)) {

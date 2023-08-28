@@ -28,5 +28,6 @@ module.exports = {
   NOTIFY_EMAILS: process.env.NOTIFY_EMAILS, // comma separated list of emails
   sendGrid: {
     API_KEY: process.env.SENDGRID_API_KEY,
+    SENDER: process.env.SENDGRID_SENDER,
   }
 }
