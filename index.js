@@ -3,10 +3,14 @@ const {parseISO, compareAsc, isBefore, format} = require('date-fns')
 require('dotenv').config();
 
 const {delay, sendEmail, logStep} = require('./utils');
-const {siteInfo, loginCred, IS_PROD, NEXT_SCHEDULE_POLL, MAX_NUMBER_OF_POLL, NOTIFY_ON_DATE_BEFORE} = require('./config');
+const {siteInfo, loginCred, IS_PROD, NEXT_SCHEDULE_POLL, MAX_NUMBER_OF_POLL, NOTIFY_ON_DATE_BEFORE, MAX_FAILS} = require('./config');
 
 let isLoggedIn = false;
-let maxTries = MAX_NUMBER_OF_POLL
+let maxTries = MAX_NUMBER_OF_POLL;
+let maxFails = MAX_FAILS;
+let errorCounter = 0;
+let failureReasons = [];
+
 
 const login = async (page) => {
   logStep('logging in');
@@ -35,6 +39,15 @@ const notifyMe = async (earliestDate) => {
   await sendEmail({
     subject: `We found an earlier date ${formattedDate}`,
     text: `Hurry and schedule for ${formattedDate} before it is taken.`
+  })
+}
+
+const notifyFailure = async (errors) => {
+  logStep(`sending an email for failure`);
+  await sendEmail({
+    subject: `The script is failing`,
+    text: `The script failed ${maxFails} times due to the followin errors: \n
+    ${errors}`,
   })
 }
 const getDatesForFacility = async (page, url) => {
@@ -100,14 +113,29 @@ const process = async (browser) => {
 }
 
 
-(async () => {
+const startTask = async () => {
   const browser = await puppeteer.launch(!IS_PROD ? {headless: false}: undefined);
 
   try{
     await process(browser);
+    errorCounter = 0;
   }catch(err){
     console.error(err);
+    failureReasons.push(err);
+    errorCounter++;
   }
 
   await browser.close();
+
+  if (errorCounter === maxFails) {
+    notifyFailure(failureReasons)
+    return;
+  }
+
+  console.log("starting cool down period now before restarting after 10 mins")
+  setTimeout(startTask, 10 * 60 * 1000); // 10 minutes in milliseconds
+};
+
+(async() => {
+  startTask();
 })();
